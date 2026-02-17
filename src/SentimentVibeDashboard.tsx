@@ -240,7 +240,7 @@ const SentimentVibeDashboard = () => {
       <div className="mb-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold text-white">
               Sentiment Vibe
             </h1>
             <p className="text-gray-400 mt-1">Advanced Brand Analytics Dashboard</p>
