@@ -6,7 +6,6 @@ import {
   Zap,
   AlertCircle,
   Users,
-  MessageSquare,
   Briefcase,
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
@@ -14,6 +13,13 @@ import {
   Download,
   RefreshCw,
   Radio,
+  Home,
+  Settings,
+  Newspaper,
+  ChevronRight,
+  Search,
+  Bell,
+  ExternalLink,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -22,7 +28,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   RadarChart,
   PolarGrid,
@@ -70,6 +75,8 @@ interface NewsItem {
   source: string
   timestamp: string
   confidence: number
+  url: string
+  author: string
 }
 
 interface JobPosting {
@@ -98,11 +105,20 @@ const COMPANIES: Company[] = [
   { id: 'tesla', name: 'Tesla', ticker: 'TSLA' },
 ]
 
+const NAV_ITEMS = [
+  { icon: Home, label: 'Home', active: true },
+  { icon: Activity, label: 'Analytics', active: false },
+  { icon: Newspaper, label: 'News Feed', active: false },
+  { icon: Briefcase, label: 'Jobs', active: false },
+  { icon: Settings, label: 'Settings', active: false },
+]
+
 const SentimentVibeDashboard = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company>(COMPANIES[0])
   const [timeRange, setTimeRange] = useState<'1W' | '1M' | '3M' | '6M' | '1Y'>('1M')
   const [isLiveMode, setIsLiveMode] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [activeNav, setActiveNav] = useState('Home')
 
   // Mock data generators
   const generateSentimentHistory = (): SentimentData[] => {
@@ -139,11 +155,14 @@ const SentimentVibeDashboard = () => {
   ]
 
   const generateNewsItems = (): NewsItem[] => [
-    { title: `${selectedCompany.name} announces new AI initiative`, sentiment: 85, source: 'TechCrunch', timestamp: '2h ago', confidence: 92 },
-    { title: `Q4 earnings beat expectations for ${selectedCompany.ticker}`, sentiment: 78, source: 'Bloomberg', timestamp: '5h ago', confidence: 88 },
-    { title: `${selectedCompany.name} faces regulatory scrutiny`, sentiment: 35, source: 'Reuters', timestamp: '8h ago', confidence: 95 },
-    { title: `New product launch receives mixed reviews`, sentiment: 62, source: 'The Verge', timestamp: '1d ago', confidence: 76 },
-    { title: `${selectedCompany.name} expands into emerging markets`, sentiment: 72, source: 'WSJ', timestamp: '1d ago', confidence: 84 },
+    { title: `${selectedCompany.name} announces new AI initiative to transform enterprise workflows`, sentiment: 85, source: 'TechCrunch', timestamp: '2h ago', confidence: 92, url: '#', author: 'Sarah Chen' },
+    { title: `Q4 earnings beat expectations for ${selectedCompany.ticker} amid strong growth`, sentiment: 78, source: 'Bloomberg', timestamp: '5h ago', confidence: 88, url: '#', author: 'Michael Torres' },
+    { title: `${selectedCompany.name} faces regulatory scrutiny in European markets`, sentiment: 35, source: 'Reuters', timestamp: '8h ago', confidence: 95, url: '#', author: 'Anna Schmidt' },
+    { title: `New product launch receives mixed reviews from industry analysts`, sentiment: 62, source: 'The Verge', timestamp: '1d ago', confidence: 76, url: '#', author: 'David Park' },
+    { title: `${selectedCompany.name} expands into emerging markets with strategic partnerships`, sentiment: 72, source: 'Wall Street Journal', timestamp: '1d ago', confidence: 84, url: '#', author: 'James Liu' },
+    { title: `${selectedCompany.name} opens new research lab focused on sustainability tech`, sentiment: 80, source: 'Ars Technica', timestamp: '2d ago', confidence: 79, url: '#', author: 'Priya Mehta' },
+    { title: `Industry analysts upgrade ${selectedCompany.ticker} stock rating to outperform`, sentiment: 88, source: 'MarketWatch', timestamp: '2d ago', confidence: 91, url: '#', author: 'Robert Chang' },
+    { title: `${selectedCompany.name} workforce restructuring raises concerns among employees`, sentiment: 40, source: 'Business Insider', timestamp: '3d ago', confidence: 82, url: '#', author: 'Emily Foster' },
   ]
 
   const generateJobPostings = (): JobPosting[] => [
@@ -200,19 +219,24 @@ const SentimentVibeDashboard = () => {
   const previousSentiment = sentimentHistory[sentimentHistory.length - 2]
   const sentimentChange = currentSentiment.overall - previousSentiment.overall
 
-  // Chart colors
   const PLATFORM_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b']
 
   const getSentimentColor = (value: number) => {
-    if (value >= 70) return 'text-green-400'
-    if (value >= 50) return 'text-yellow-400'
-    return 'text-red-400'
+    if (value >= 70) return 'text-emerald-600'
+    if (value >= 50) return 'text-amber-600'
+    return 'text-red-500'
   }
 
-  const getSentimentBgColor = (value: number) => {
-    if (value >= 70) return 'bg-green-500/20 border-green-500/50'
-    if (value >= 50) return 'bg-yellow-500/20 border-yellow-500/50'
-    return 'bg-red-500/20 border-red-500/50'
+  const getSentimentBg = (value: number) => {
+    if (value >= 70) return 'bg-emerald-50 border-emerald-200'
+    if (value >= 50) return 'bg-amber-50 border-amber-200'
+    return 'bg-red-50 border-red-200'
+  }
+
+  const getSentimentDot = (value: number) => {
+    if (value >= 70) return 'bg-emerald-500'
+    if (value >= 50) return 'bg-amber-500'
+    return 'bg-red-500'
   }
 
   const exportData = () => {
@@ -235,389 +259,419 @@ const SentimentVibeDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900 text-gray-100 p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <div className="mb-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Sentiment Vibe
-            </h1>
-            <p className="text-gray-400 mt-1">Advanced Brand Analytics Dashboard</p>
+    <div className="min-h-screen bg-surface-100 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-surface-300 flex flex-col justify-between min-h-screen sticky top-0">
+        <div>
+          <div className="p-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="w-7 h-7 text-gray-800" />
+              <span className="font-bold text-lg text-gray-800">SentimentVibe</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <nav className="px-3 space-y-1">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => setActiveNav(item.label)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  activeNav === item.label
+                    ? 'bg-surface-100 text-gray-900'
+                    : 'text-gray-500 hover:bg-surface-50 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </div>
+                {activeNav === item.label && <ChevronRight className="w-4 h-4" />}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 min-h-screen">
+        {/* Top Header */}
+        <header className="bg-white border-b border-surface-300 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+          <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
+          <div className="flex items-center gap-3">
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+              className="p-2 hover:bg-surface-100 rounded-lg transition-all disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`w-5 h-5 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={exportData}
-              className="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg flex items-center gap-2 transition-all"
+              className="p-2 hover:bg-surface-100 rounded-lg transition-all"
             >
-              <Download className="w-4 h-4" />
-              Export
+              <Download className="w-5 h-5 text-gray-500" />
+            </button>
+            <button className="p-2 hover:bg-surface-100 rounded-lg transition-all">
+              <Search className="w-5 h-5 text-gray-500" />
+            </button>
+            <button className="p-2 hover:bg-surface-100 rounded-lg transition-all relative">
+              <Bell className="w-5 h-5 text-gray-500" />
             </button>
             <button
               onClick={() => setIsLiveMode(!isLiveMode)}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                isLiveMode ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-dark-700 hover:bg-dark-600'
+              className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${
+                isLiveMode ? 'bg-emerald-500 text-white' : 'bg-surface-200 text-gray-600 hover:bg-surface-300'
               }`}
             >
               <Radio className={`w-4 h-4 ${isLiveMode ? 'animate-pulse' : ''}`} />
               {isLiveMode ? 'Live' : 'Demo'}
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Company Selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-          {COMPANIES.map((company) => (
-            <button
-              key={company.id}
-              onClick={() => setSelectedCompany(company)}
-              className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
-                selectedCompany.id === company.id
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                  : 'bg-dark-700 hover:bg-dark-600 text-gray-300'
-              }`}
-            >
-              {company.name} ({company.ticker})
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-        {/* Overall Sentiment Card */}
-        <div className="lg:col-span-4 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-400" />
-              Overall Sentiment
-            </h2>
-            {isLiveMode && <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>}
+        <div className="p-6 lg:p-8">
+          {/* Company Selector */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-thin">
+            {COMPANIES.map((company) => (
+              <button
+                key={company.id}
+                onClick={() => setSelectedCompany(company)}
+                className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
+                  selectedCompany.id === company.id
+                    ? 'bg-gray-900 text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:bg-surface-200 border border-surface-300'
+                }`}
+              >
+                {company.name} ({company.ticker})
+              </button>
+            ))}
           </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-end gap-2">
-                <span className={`text-5xl font-bold ${getSentimentColor(currentSentiment.overall)}`}>
+
+          {/* Dashboard Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Sentiment Score Card */}
+            <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
+                  Sentiment Score
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+                <select
+                  value={timeRange}
+                  onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
+                  className="px-3 py-1.5 border border-surface-300 rounded-lg text-sm text-gray-600 bg-white"
+                >
+                  <option value="1W">1 Week</option>
+                  <option value="1M">1 Month</option>
+                  <option value="3M">3 Months</option>
+                  <option value="6M">6 Months</option>
+                  <option value="1Y">All time</option>
+                </select>
+              </div>
+              <div className="flex items-end gap-3 mb-6">
+                <span className="text-5xl font-bold text-gray-900">
                   {currentSentiment.overall}
                 </span>
-                <span className="text-gray-400 text-xl mb-2">/100</span>
-                <div className="flex items-center gap-1 mb-2">
+                <span className="text-4xl font-light text-gray-300">/100</span>
+                <div className="flex items-center gap-1 mb-2 ml-2">
                   {sentimentChange > 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-400" />
+                    <TrendingUp className="w-5 h-5 text-emerald-500" />
                   ) : (
-                    <TrendingDown className="w-5 h-5 text-red-400" />
+                    <TrendingDown className="w-5 h-5 text-red-500" />
                   )}
-                  <span className={sentimentChange > 0 ? 'text-green-400' : 'text-red-400'}>
-                    {Math.abs(sentimentChange).toFixed(1)}
+                  <span className={`text-sm font-semibold ${sentimentChange > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {Math.abs(sentimentChange).toFixed(1)} pts
                   </span>
                 </div>
               </div>
-              <p className="text-gray-400 mt-2">Current sentiment score</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={sentimentHistory}>
+                  <defs>
+                    <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="timestamp" stroke="#d1d5db" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                  <YAxis stroke="#d1d5db" tick={{ fill: '#9ca3af', fontSize: 12 }} domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                    labelStyle={{ color: '#6b7280' }}
+                  />
+                  <Area type="monotone" dataKey="overall" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorOverall)" name="Overall" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-600">
-              <div>
-                <p className="text-gray-400 text-sm">Employee</p>
-                <p className={`text-2xl font-bold ${getSentimentColor(currentSentiment.employee)}`}>
-                  {currentSentiment.employee}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm">External</p>
-                <p className={`text-2xl font-bold ${getSentimentColor(currentSentiment.external)}`}>
-                  {currentSentiment.external}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Sentiment Velocity */}
-        <div className="lg:col-span-4 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Zap className="w-5 h-5 text-yellow-400" />
-              Sentiment Velocity
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-end gap-2">
-                <span className={`text-5xl font-bold ${currentSentiment.velocity > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {currentSentiment.velocity > 0 ? '+' : ''}{currentSentiment.velocity}
-                </span>
-                <span className="text-gray-400 text-xl mb-2">pts/day</span>
+            {/* Right Column - Velocity & Stock */}
+            <div className="lg:col-span-4 space-y-5">
+              {/* Sentiment Velocity */}
+              <div className="bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+                <div className="flex items-center gap-2 text-gray-500 text-sm font-medium mb-3">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  Sentiment Velocity
+                </div>
+                <div className="flex items-end gap-2 mb-2">
+                  <span className={`text-4xl font-bold ${currentSentiment.velocity > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {currentSentiment.velocity > 0 ? '+' : ''}{currentSentiment.velocity}
+                  </span>
+                  <span className="text-gray-400 text-lg mb-1">pts/day</span>
+                </div>
+                <div className="mt-3 p-3 bg-surface-50 rounded-xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-blue-500" />
+                    <p className="text-xs font-medium text-blue-600">Trend Analysis</p>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {Math.abs(currentSentiment.velocity) > 5
+                      ? currentSentiment.velocity > 0
+                        ? 'Strong positive momentum detected'
+                        : 'Sharp negative trend - attention needed'
+                      : 'Stable sentiment trajectory'}
+                  </p>
+                </div>
               </div>
-              <p className="text-gray-400 mt-2">Rate of sentiment change</p>
-            </div>
-            <div className="pt-4 border-t border-dark-600">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-purple-400" />
-                <p className="text-sm font-medium text-purple-400">Trend Analysis</p>
-              </div>
-              <p className="text-sm text-gray-400">
-                {Math.abs(currentSentiment.velocity) > 5
-                  ? currentSentiment.velocity > 0
-                    ? 'Strong positive momentum detected'
-                    : 'Sharp negative trend - attention needed'
-                  : 'Stable sentiment trajectory'}
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Stock Data */}
-        <div className="lg:col-span-4 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <LineChartIcon className="w-5 h-5 text-green-400" />
-              Stock Performance
-            </h2>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-end gap-2">
-                <span className="text-5xl font-bold text-gray-100">${stockData.price}</span>
-                <div className="flex items-center gap-1 mb-2">
+              {/* Stock Performance */}
+              <div className="bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+                <div className="flex items-center gap-2 text-gray-500 text-sm font-medium mb-3">
+                  <LineChartIcon className="w-4 h-4 text-emerald-500" />
+                  {selectedCompany.ticker}
+                </div>
+                <div className="flex items-end gap-2 mb-1">
+                  <span className="text-4xl font-bold text-gray-900">${stockData.price}</span>
+                </div>
+                <div className="flex items-center gap-1">
                   {stockData.change > 0 ? (
-                    <TrendingUp className="w-5 h-5 text-green-400" />
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
                   ) : (
-                    <TrendingDown className="w-5 h-5 text-red-400" />
+                    <TrendingDown className="w-4 h-4 text-red-500" />
                   )}
-                  <span className={stockData.change > 0 ? 'text-green-400' : 'text-red-400'}>
+                  <span className={`text-sm font-semibold ${stockData.change > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                     {stockData.changePercent > 0 ? '+' : ''}{stockData.changePercent}%
                   </span>
                 </div>
-              </div>
-              <p className="text-gray-400 mt-2">{selectedCompany.ticker} - Today</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-dark-600">
-              <div>
-                <p className="text-gray-400 text-sm">High</p>
-                <p className="text-xl font-bold text-green-400">${stockData.high}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm">Low</p>
-                <p className="text-xl font-bold text-red-400">${stockData.low}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sentiment Trend Chart */}
-        <div className="lg:col-span-8 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-400" />
-              Sentiment Trends
-            </h2>
-            <div className="flex gap-2 overflow-x-auto">
-              {(['1W', '1M', '3M', '6M', '1Y'] as const).map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(range)}
-                  className={`px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-all ${
-                    timeRange === range
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-dark-700 hover:bg-dark-600 text-gray-300'
-                  }`}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={sentimentHistory}>
-              <defs>
-                <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorEmployee" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorExternal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d2d44" />
-              <XAxis dataKey="timestamp" stroke="#6b7280" tick={{ fill: '#9ca3af' }} />
-              <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} domain={[0, 100]} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2d2d44', borderRadius: '8px' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Area type="monotone" dataKey="overall" stroke="#3b82f6" fillOpacity={1} fill="url(#colorOverall)" name="Overall" />
-              <Area type="monotone" dataKey="employee" stroke="#10b981" fillOpacity={1} fill="url(#colorEmployee)" name="Employee" />
-              <Area type="monotone" dataKey="external" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorExternal)" name="External" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Engagement Metrics */}
-        <div className="lg:col-span-4 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <Users className="w-5 h-5 text-blue-400" />
-            Engagement Metrics
-          </h2>
-          <div className="space-y-4">
-            <div className="bg-dark-700 rounded-lg p-4">
-              <p className="text-gray-400 text-sm mb-1">Total Volume</p>
-              <p className="text-3xl font-bold text-blue-400">{currentSentiment.volume.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">mentions today</p>
-            </div>
-            <div className="bg-dark-700 rounded-lg p-4">
-              <p className="text-gray-400 text-sm mb-1">Avg. Confidence</p>
-              <div className="flex items-end gap-2">
-                <p className="text-3xl font-bold text-purple-400">
-                  {Math.round(platformSentiment.reduce((acc, p) => acc + p.confidence, 0) / platformSentiment.length)}%
-                </p>
-              </div>
-              <div className="w-full bg-dark-600 rounded-full h-2 mt-2">
-                <div
-                  className="bg-purple-500 h-2 rounded-full"
-                  style={{ width: `${Math.round(platformSentiment.reduce((acc, p) => acc + p.confidence, 0) / platformSentiment.length)}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="bg-dark-700 rounded-lg p-4">
-              <p className="text-gray-400 text-sm mb-1">Peak Activity</p>
-              <p className="text-2xl font-bold text-green-400">2:00 PM - 4:00 PM</p>
-              <p className="text-xs text-gray-500 mt-1">EST</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Emotion Radar Chart */}
-        <div className="lg:col-span-6 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <PieChartIcon className="w-5 h-5 text-pink-400" />
-            Emotion Analysis
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={Object.entries(emotionData).map(([key, value]) => ({
-              emotion: key.charAt(0).toUpperCase() + key.slice(1),
-              value,
-            }))}>
-              <PolarGrid stroke="#2d2d44" />
-              <PolarAngleAxis dataKey="emotion" tick={{ fill: '#9ca3af' }} />
-              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#9ca3af' }} />
-              <Radar name="Emotion Score" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #2d2d44', borderRadius: '8px' }}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Platform Distribution */}
-        <div className="lg:col-span-6 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <MessageSquare className="w-5 h-5 text-green-400" />
-            Platform Breakdown
-          </h2>
-          <div className="space-y-4">
-            {platformSentiment.map((platform, idx) => (
-              <div key={platform.platform} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-300">{platform.platform}</span>
-                  <span className={`text-sm font-bold ${getSentimentColor(platform.sentiment)}`}>
-                    {platform.sentiment}/100
-                  </span>
-                </div>
-                <div className="w-full bg-dark-700 rounded-full h-3 overflow-hidden">
-                  <div
-                    className="h-3 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${platform.sentiment}%`,
-                      backgroundColor: PLATFORM_COLORS[idx],
-                    }}
-                  ></div>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{platform.volume.toLocaleString()} mentions</span>
-                  <span>{platform.confidence}% confidence</span>
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-surface-200">
+                  <div>
+                    <p className="text-xs text-gray-400">High</p>
+                    <p className="text-lg font-semibold text-emerald-600">${stockData.high}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Low</p>
+                    <p className="text-lg font-semibold text-red-500">${stockData.low}</p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Latest News */}
-        <div className="lg:col-span-6 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <MessageSquare className="w-5 h-5 text-orange-400" />
-            Latest News
-          </h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin">
-            {newsItems.map((news, idx) => (
-              <div
-                key={idx}
-                className={`p-4 rounded-lg border ${getSentimentBgColor(news.sentiment)}`}
-              >
-                <p className="font-medium text-sm mb-2">{news.title}</p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>{news.source}</span>
-                  <span>{news.timestamp}</span>
+            {/* Platform Breakdown */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-blue-500" />
+                  Platform Breakdown
+                </h2>
+              </div>
+              <div className="space-y-5">
+                {platformSentiment.map((platform, idx) => (
+                  <div key={platform.platform} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">{platform.platform}</span>
+                      <span className={`text-sm font-bold ${getSentimentColor(platform.sentiment)}`}>
+                        {platform.sentiment}/100
+                      </span>
+                    </div>
+                    <div className="w-full bg-surface-200 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="h-2.5 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${platform.sentiment}%`,
+                          backgroundColor: PLATFORM_COLORS[idx],
+                        }}
+                      ></div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>{platform.volume.toLocaleString()} mentions</span>
+                      <span>{platform.confidence}% confidence</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Engagement Metrics */}
+              <div className="mt-6 pt-5 border-t border-surface-200 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <Users className="w-4 h-4 text-blue-500" />
+                  Engagement
                 </div>
-                <div className="flex items-center gap-4 mt-2 pt-2 border-t border-dark-600">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500">Sentiment:</span>
-                    <span className={`text-xs font-bold ${getSentimentColor(news.sentiment)}`}>
-                      {news.sentiment}
+                <div className="bg-surface-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Total Volume</p>
+                  <p className="text-2xl font-bold text-blue-600">{currentSentiment.volume.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">mentions today</p>
+                </div>
+                <div className="bg-surface-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Avg. Confidence</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {Math.round(platformSentiment.reduce((acc, p) => acc + p.confidence, 0) / platformSentiment.length)}%
+                  </p>
+                  <div className="w-full bg-surface-200 rounded-full h-1.5 mt-2">
+                    <div
+                      className="bg-purple-500 h-1.5 rounded-full"
+                      style={{ width: `${Math.round(platformSentiment.reduce((acc, p) => acc + p.confidence, 0) / platformSentiment.length)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Emotion Analysis */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
+                <PieChartIcon className="w-4 h-4 text-pink-500" />
+                Emotion Analysis
+              </h2>
+              <ResponsiveContainer width="100%" height={280}>
+                <RadarChart data={Object.entries(emotionData).map(([key, value]) => ({
+                  emotion: key.charAt(0).toUpperCase() + key.slice(1),
+                  value,
+                }))}>
+                  <PolarGrid stroke="#e5e7eb" />
+                  <PolarAngleAxis dataKey="emotion" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                  <Radar name="Emotion Score" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Employee vs External */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <h2 className="text-sm font-semibold text-gray-700 mb-5">Sentiment Breakdown</h2>
+              <div className="space-y-5">
+                <div className="bg-surface-50 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm text-gray-500">Employee Sentiment</p>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      currentSentiment.employee >= 70 ? 'bg-emerald-100 text-emerald-700' : currentSentiment.employee >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {currentSentiment.employee >= 70 ? 'Positive' : currentSentiment.employee >= 50 ? 'Neutral' : 'Negative'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500">Confidence:</span>
-                    <span className="text-xs font-bold text-purple-400">{news.confidence}%</span>
+                  <p className={`text-4xl font-bold ${getSentimentColor(currentSentiment.employee)}`}>
+                    {currentSentiment.employee}
+                  </p>
+                  <div className="w-full bg-surface-200 rounded-full h-2 mt-3">
+                    <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{ width: `${currentSentiment.employee}%` }}></div>
                   </div>
                 </div>
+                <div className="bg-surface-50 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm text-gray-500">External Sentiment</p>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      currentSentiment.external >= 70 ? 'bg-emerald-100 text-emerald-700' : currentSentiment.external >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {currentSentiment.external >= 70 ? 'Positive' : currentSentiment.external >= 50 ? 'Neutral' : 'Negative'}
+                    </span>
+                  </div>
+                  <p className={`text-4xl font-bold ${getSentimentColor(currentSentiment.external)}`}>
+                    {currentSentiment.external}
+                  </p>
+                  <div className="w-full bg-surface-200 rounded-full h-2 mt-3">
+                    <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${currentSentiment.external}%` }}></div>
+                  </div>
+                </div>
+                <div className="bg-surface-50 rounded-xl p-4 flex items-center justify-between">
+                  <p className="text-sm text-gray-500">Peak Activity</p>
+                  <p className="text-sm font-semibold text-gray-700">2:00 PM - 4:00 PM EST</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Job Postings */}
-        <div className="lg:col-span-6 bg-dark-800 rounded-xl p-6 border border-dark-600 animate-fade-in">
-          <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-            <Briefcase className="w-5 h-5 text-cyan-400" />
-            Job Postings Sentiment
-          </h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin">
-            {jobPostings.map((job, idx) => (
-              <div key={idx} className="p-4 bg-dark-700 rounded-lg border border-dark-600">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{job.title}</p>
-                    <p className="text-xs text-gray-400 mt-1">{job.location}</p>
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${
-                      job.sentiment >= 75 ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                    }`}
-                  >
-                    {job.sentiment}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-dark-600 rounded text-xs text-gray-300">{job.type}</span>
-                </div>
+            {/* Articles Feed */}
+            <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Newspaper className="w-4 h-4 text-orange-500" />
+                  Articles Feed
+                </h2>
+                <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                  See all <ChevronRight className="w-3 h-3" />
+                </span>
               </div>
-            ))}
+              <div className="space-y-3 max-h-[480px] overflow-y-auto scrollbar-thin pr-1">
+                {newsItems.map((news, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-xl border transition-all hover:shadow-sm ${getSentimentBg(news.sentiment)}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm text-gray-800 mb-2 leading-snug">{news.title}</h3>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                          <span className="font-semibold text-gray-700">{news.source}</span>
+                          <span className="text-gray-300">|</span>
+                          <span>By {news.author}</span>
+                          <span className="text-gray-300">|</span>
+                          <span>{news.timestamp}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-2 h-2 rounded-full ${getSentimentDot(news.sentiment)}`}></div>
+                          <span className={`text-sm font-bold ${getSentimentColor(news.sentiment)}`}>
+                            {news.sentiment}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-400">{news.confidence}% conf.</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-black/5">
+                      <a href={news.url} className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 font-medium">
+                        Read article <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Job Postings */}
+            <div className="lg:col-span-4 bg-white rounded-2xl p-6 border border-surface-300 shadow-sm animate-fade-in">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-cyan-500" />
+                  Job Postings
+                </h2>
+                <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                  See all <ChevronRight className="w-3 h-3" />
+                </span>
+              </div>
+              <div className="space-y-3 max-h-[480px] overflow-y-auto scrollbar-thin">
+                {jobPostings.map((job, idx) => (
+                  <div key={idx} className="p-4 bg-surface-50 rounded-xl border border-surface-200 hover:shadow-sm transition-all">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm text-gray-800">{job.title}</p>
+                        <p className="text-xs text-gray-400 mt-1">{job.location}</p>
+                      </div>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          job.sentiment >= 75 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {job.sentiment}
+                      </span>
+                    </div>
+                    <span className="inline-block px-2.5 py-1 bg-white border border-surface-300 rounded-full text-xs text-gray-500 font-medium">{job.type}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
