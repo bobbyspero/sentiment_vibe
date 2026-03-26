@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-dark-900 text-gray-100 font-sans antialiased;
+    @apply bg-surface-100 text-gray-800 font-sans antialiased;
     margin: 0;
     padding: 0;
   }
@@ -20,16 +20,16 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-dark-800;
+    @apply bg-surface-200;
     border-radius: 10px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-dark-600;
+    @apply bg-surface-400;
     border-radius: 10px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-500;
+    @apply bg-gray-400;
   }
 }

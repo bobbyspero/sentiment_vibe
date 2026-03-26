@@ -7,12 +7,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        dark: {
-          900: '#0a0a0f',
-          800: '#12121a',
-          700: '#1a1a2e',
-          600: '#252538',
-          500: '#2d2d44',
+        surface: {
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#eeeeee',
+          300: '#e0e0e0',
+          400: '#bdbdbd',
         },
         accent: {
           blue: '#3b82f6',
@@ -20,6 +20,7 @@ export default {
           green: '#10b981',
           red: '#ef4444',
           yellow: '#f59e0b',
+          orange: '#f97316',
         }
       },
       animation: {
